@@ -9,7 +9,8 @@ const initialOptions = {
     lightDistance: 10,
     cameraDistance: 5,
     cameraHeight: 2,
-    blowStrength: 0
+    blowStrength: 0,
+    blowIncrement: 0.5
 };
 
 const app = document.querySelector<HTMLDivElement>('#app')!
@@ -50,9 +51,14 @@ app.innerHTML = `
         <h3>바람 설정</h3>
         <button id="blow-btn" class="blow-btn">Blow</button>
         <div class="control-item">
-          <label>바람 세기: </label>
+          <label>최대 바람 량: </label>
           <input type="range" id="blow-strength" min="0" max="1" step="0.1" value="${initialOptions.blowStrength}">
           <span class="value">${initialOptions.blowStrength}</span>
+        </div>
+        <div class="control-item">
+          <label>바람 속도: </label>
+          <input type="range" id="blow-increment" min="0" max="1" step="0.1" value="${initialOptions.blowIncrement}">
+          <span class="value">${initialOptions.blowIncrement}</span>
         </div>
       </div>
 
@@ -128,30 +134,46 @@ if (showControls) {
     let blowInterval: number | null = null;
     let currentBlowStrength = 0;
     const maxBlowStrength = 1.0;
-    const blowIncrement = 0.03;
-    const blowDecrement = 0.02;
+    
+    // 이지잉 함수 (부드러운 가속)
+    const easeInQuad = (t: number) => t * t;
 
     blowBtn.addEventListener('mousedown', () => {
         if (blowInterval) return;
         
+        const startTime = Date.now();
+        let lastTime = startTime;
+        
         blowInterval = window.setInterval(() => {
+            const currentTime = Date.now();
+            const totalElapsedTime = (currentTime - startTime) / 1000;
+            lastTime = currentTime;
+            
             const targetStrength = parseFloat(blowStrength.value);
+            const speed = parseFloat(blowIncrementInput.value);
             
             if (currentBlowStrength < targetStrength) {
-                currentBlowStrength = Math.min(
-                    targetStrength,
-                    currentBlowStrength + blowIncrement
-                );
+                if (speed >= 0.9) {
+                    // 매우 빠른 속도 (0.9~1.0)일 때는 즉시 목표값으로
+                    currentBlowStrength = targetStrength;
+                } else {
+                    // 속도에 따른 부드러운 증가 (0~0.9)
+                    const duration = 2.0 * (1 - speed);
+                    const progress = Math.min(1, totalElapsedTime / duration);
+                    const easedProgress = easeInQuad(progress);
+                    currentBlowStrength = targetStrength * easedProgress;
+                }
+                
                 candle.setBlowStrength(currentBlowStrength);
             }
             
-            if (currentBlowStrength >= maxBlowStrength) {
+            if (currentBlowStrength >= targetStrength) {
                 if (blowInterval) {
                     clearInterval(blowInterval);
                     blowInterval = null;
                 }
             }
-        }, 50);
+        }, 16);
     });
 
     const stopBlowing = () => {
@@ -183,49 +205,55 @@ if (showControls) {
             currentBlowStrength = Math.min(maxBlowStrength, strength);
             candle.setBlowStrength(currentBlowStrength);
         }
-    })
+    });
 
     // 회복 속도 조절
     const recoverySpeed = document.querySelector<HTMLInputElement>('#recovery-speed')!
     recoverySpeed.addEventListener('input', (e) => {
         const speed = parseFloat((e.target as HTMLInputElement).value)
         candle.setRecoverySpeed(speed)
-    })
+    });
 
     // 빛 강도 조절
     const lightIntensity = document.querySelector<HTMLInputElement>('#light-intensity')!
     lightIntensity.addEventListener('input', (e) => {
         const intensity = parseFloat((e.target as HTMLInputElement).value)
         candle.setLightIntensity(intensity)
-    })
+    });
 
     // 빛 거리 조절
     const lightDistance = document.querySelector<HTMLInputElement>('#light-distance')!
     lightDistance.addEventListener('input', (e) => {
         const distance = parseFloat((e.target as HTMLInputElement).value)
         candle.setLightDistance(distance)
-    })
+    });
 
     // 카메라 거리 조절
     const cameraDistance = document.querySelector<HTMLInputElement>('#camera-distance')!
     cameraDistance.addEventListener('input', (e) => {
         const distance = parseFloat((e.target as HTMLInputElement).value)
         candle.setCameraDistance(distance)
-    })
+    });
 
     // 카메라 높이 조절
     const cameraHeight = document.querySelector<HTMLInputElement>('#camera-height')!
     cameraHeight.addEventListener('input', (e) => {
         const height = parseFloat((e.target as HTMLInputElement).value)
         candle.setCameraHeight(height)
-    })
+    });
 
     // 불꽃 크기 조절
     const flameSize = document.querySelector<HTMLInputElement>('#flame-size')!
     flameSize.addEventListener('input', (e) => {
         const size = parseFloat((e.target as HTMLInputElement).value)
         candle.setFlameSize(size)
-    })
+    });
+
+    // 바람 속도 조절
+    const blowIncrementInput = document.querySelector<HTMLInputElement>('#blow-increment')!
+    blowIncrementInput.addEventListener('input', (e) => {
+        const speed = parseFloat((e.target as HTMLInputElement).value);
+    });
 }
 
 // 디바이스 방향 감지로 중력 효과 구현
