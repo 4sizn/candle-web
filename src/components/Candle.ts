@@ -1,5 +1,27 @@
 import * as THREE from 'three';
 
+// 촛불 설정을 위한 인터페이스
+export interface CandleOptions {
+    flameSize?: number;
+    recoverySpeed?: number;
+    lightIntensity?: number;
+    lightDistance?: number;
+    cameraDistance?: number;
+    cameraHeight?: number;
+    blowStrength?: number;
+}
+
+// 기본 설정값
+const DEFAULT_OPTIONS: Required<CandleOptions> = {
+    flameSize: 1,
+    recoverySpeed: 0.02,
+    lightIntensity: 2,
+    lightDistance: 10,
+    cameraDistance: 5,
+    cameraHeight: 2,
+    blowStrength: 0
+};
+
 export class Candle {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
@@ -11,19 +33,30 @@ export class Candle {
     private raycaster: THREE.Raycaster;
     private mouse: THREE.Vector2;
     private isLit: boolean = true;
-    private blowStrength: number = 0;
+    private blowStrength: number;
     private targetBlowStrength: number = 0;
-    private recoverySpeed: number = 0.02;
+    private recoverySpeed: number;
     private gravity: THREE.Vector3 = new THREE.Vector3(0, -9.8, 0);
     private isDragging: boolean = false;
     private previousMousePosition: { x: number; y: number } = { x: 0, y: 0 };
     private currentRotation: number = 0;
-    private cameraDistance: number = 5;
-    private cameraHeight: number = 2;
-    private flameSize: number = 1;
-    private baseIntensity: number = 2; // 기본 빛 강도 값 저장을 위한 변수 추가
+    private cameraDistance: number;
+    private cameraHeight: number;
+    private flameSize: number;
+    private baseIntensity: number;
 
-    constructor(container: HTMLElement) {
+    constructor(container: HTMLElement, options: CandleOptions = {}) {
+        // 옵션 병합
+        const settings = { ...DEFAULT_OPTIONS, ...options };
+        
+        // 설정값 초기화
+        this.flameSize = settings.flameSize;
+        this.recoverySpeed = settings.recoverySpeed;
+        this.baseIntensity = settings.lightIntensity;
+        this.cameraDistance = settings.cameraDistance;
+        this.cameraHeight = settings.cameraHeight;
+        this.blowStrength = settings.blowStrength;
+
         // Scene 설정
         this.scene = new THREE.Scene();
         this.scene.background = new THREE.Color(0x000000); // 배경을 검은색으로 설정
@@ -36,6 +69,7 @@ export class Candle {
         // Renderer 설정
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
+        //@ts-ignore
         this.renderer.physicallyCorrectLights = true; // 물리적으로 정확한 조명 사용
         container.appendChild(this.renderer.domElement);
 
@@ -232,8 +266,7 @@ export class Candle {
 
     public setBlowStrength(strength: number) {
         this.targetBlowStrength = Math.max(0, Math.min(1, strength));
-        // 불기 강도가 0.8 이상이면 불꽃을 끔
-        if (this.targetBlowStrength >= 0.8) {
+        if (this.targetBlowStrength >= 1.0) {
             this.isLit = false;
             this.flame.visible = false;
             // 불꽃이 꺼진 후에는 blowStrength를 1로 설정하여 완전히 꺼진 상태 유지
