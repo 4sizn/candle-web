@@ -4,14 +4,14 @@ import { DeviceOrientation } from './components/DeviceOrientation'
 
 // 초기 설정값 정의
 const initialOptions = {
-    flameSize: 1,
-    recoverySpeed: 0.02,
-    lightIntensity: 2,
-    lightDistance: 10,
-    cameraDistance: 5,
-    cameraHeight: 2,
-    blowStrength: 0,
-    blowIncrement: 0.5
+    flameSize: 1,        // min: 0, max: 2
+    recoverySpeed: 0.02, // min: 0.01, max: 0.1
+    lightIntensity: 2,   // min: 0, max: 5
+    lightDistance: 10,   // min: 5, max: 20
+    cameraDistance: 5,   // min: 3, max: 10
+    cameraHeight: 2,     // min: 0, max: 5
+    blowStrength: 0,     // min: 0, max: 1
+    blowIncrement: 0.5   // min: 0, max: 1
 };
 
 const app = document.querySelector<HTMLDivElement>('#app')!
@@ -114,8 +114,10 @@ const candleContainer = document.querySelector<HTMLDivElement>('#candle-containe
 const candle = new Candle(candleContainer, initialOptions);
 
 // 디바이스 방향 컴포넌트 초기화
+if (showControls) {
 const deviceOrientation = new DeviceOrientation();
 deviceOrientation.mount();
+}
 
 // 초기 카메라 위치 설정
 candle.setCameraDistance(initialOptions.cameraDistance);
