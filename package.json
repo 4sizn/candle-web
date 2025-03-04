@@ -1,16 +1,21 @@
 {
   "name": "candle-web",
   "private": true,
-  "version": "0.0.1",
+  "version": "0.0.0",
   "type": "module",
+  "homepage": "https://4sizn.github.io/candle-web/",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build:release":"vite build -- --mode release",
-    "build:dev":"vite build -- --mode development",
-    "preview": "vite preview"
+    "dev": "vite --mode development",
+    "build:dev": "tsc && vite build --mode development",
+    "build:release": "tsc && vite build --mode release",
+    "preview:dev": "vite preview --mode development",
+    "preview:release": "vite preview --mode release",
+    "predeploy": "npm run build:release",
+    "deploy": "gh-pages -d dist"
   },
   "devDependencies": {
+    "@types/node": "^22.13.9",
+    "gh-pages": "^6.1.1",
     "typescript": "^5.2.2",
     "vite": "^5.3.1"
   },
