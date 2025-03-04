@@ -256,12 +256,6 @@ if (showControls) {
         const size = parseFloat((e.target as HTMLInputElement).value)
         candle.setFlameSize(size)
     });
-
-    // 바람 속도 조절
-    const blowIncrementInput = document.querySelector<HTMLInputElement>('#blow-increment')!
-    blowIncrementInput.addEventListener('input', (e) => {
-        const speed = parseFloat((e.target as HTMLInputElement).value);
-    });
 }
 
 // 디바이스 방향 감지로 중력 효과 구현
