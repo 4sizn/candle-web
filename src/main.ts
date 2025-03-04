@@ -1,5 +1,6 @@
 import './style.css'
 import { Candle } from './components/Candle'
+import { DeviceOrientation } from './components/DeviceOrientation'
 
 // 초기 설정값 정의
 const initialOptions = {
@@ -111,6 +112,10 @@ app.innerHTML = `
 const candleContainer = document.querySelector<HTMLDivElement>('#candle-container')!
 
 const candle = new Candle(candleContainer, initialOptions);
+
+// 디바이스 방향 컴포넌트 초기화
+const deviceOrientation = new DeviceOrientation();
+deviceOrientation.mount();
 
 // 초기 카메라 위치 설정
 candle.setCameraDistance(initialOptions.cameraDistance);
