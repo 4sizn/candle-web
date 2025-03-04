@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { eventController } from '../utils/EventController';
 
 // 촛불 설정을 위한 인터페이스
 export interface CandleOptions {
@@ -242,6 +243,12 @@ export class Candle {
                         this.blowStrength + this.recoverySpeed
                     );
                 }
+                eventController.emit('candleStateChanged', {
+                    isLit: this.isLit,
+                    blowStrength: this.blowStrength,
+                    flameSize: this.flameSize,
+                    lightIntensity: this.flameLight.intensity
+                });
             }
 
             const uniforms = (this.flame.material as THREE.ShaderMaterial).uniforms;
@@ -269,10 +276,15 @@ export class Candle {
         if (this.targetBlowStrength >= 1.0) {
             this.isLit = false;
             this.flame.visible = false;
-            // 불꽃이 꺼진 후에는 blowStrength를 1로 설정하여 완전히 꺼진 상태 유지
             this.blowStrength = 1;
             this.targetBlowStrength = 1;
         }
+        eventController.emit('candleStateChanged', {
+            isLit: this.isLit,
+            blowStrength: this.blowStrength,
+            flameSize: this.flameSize,
+            lightIntensity: this.flameLight.intensity
+        });
     }
 
     public startRecovery() {
@@ -295,14 +307,19 @@ export class Candle {
         this.flame.visible = this.isLit;
         
         if (this.isLit) {
-            // 불이 켜질 때는 모든 값을 초기화
             this.blowStrength = 0;
             this.targetBlowStrength = 0;
             this.flameLight.intensity = this.baseIntensity;
         } else {
-            // 불이 꺼질 때
             this.flameLight.intensity = 0;
         }
+
+        eventController.emit('candleStateChanged', {
+            isLit: this.isLit,
+            blowStrength: this.blowStrength,
+            flameSize: this.flameSize,
+            lightIntensity: this.flameLight.intensity
+        });
     }
 
     public setRecoverySpeed(speed: number) {
@@ -315,6 +332,12 @@ export class Candle {
             const scale = 1 - this.blowStrength;
             this.flameLight.intensity = this.baseIntensity * scale;
         }
+        eventController.emit('candleStateChanged', {
+            isLit: this.isLit,
+            blowStrength: this.blowStrength,
+            flameSize: this.flameSize,
+            lightIntensity: this.flameLight.intensity
+        });
     }
 
     public setLightDistance(distance: number) {
@@ -349,6 +372,12 @@ export class Candle {
         this.flameSize = size;
         const uniforms = (this.flame.material as THREE.ShaderMaterial).uniforms;
         uniforms.flameSize.value = this.flameSize;
+        eventController.emit('candleStateChanged', {
+            isLit: this.isLit,
+            blowStrength: this.blowStrength,
+            flameSize: this.flameSize,
+            lightIntensity: this.flameLight.intensity
+        });
     }
 
     // Getter 메서드들 추가

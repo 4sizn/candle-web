@@ -1,6 +1,7 @@
 import './style.css'
 import { Candle } from './components/Candle'
 import { DeviceOrientation } from './components/DeviceOrientation'
+import { eventController } from './utils/EventController'
 
 // 초기 설정값 정의
 const initialOptions = {
@@ -123,8 +124,26 @@ deviceOrientation.mount();
 candle.setCameraDistance(initialOptions.cameraDistance);
 candle.setCameraHeight(initialOptions.cameraHeight);
 
+// 상태 업데이트 함수
+const setupStatusUpdates = () => {
+    const flameStatus = document.querySelector<HTMLElement>('#flame-status')!;
+    const currentBlowStrengthEl = document.querySelector<HTMLElement>('#current-blow-strength')!;
+    const currentFlameSizeEl = document.querySelector<HTMLElement>('#current-flame-size')!;
+    const currentLightIntensityEl = document.querySelector<HTMLElement>('#current-light-intensity')!;
+
+    eventController.on('candleStateChanged', (state) => {
+        flameStatus.textContent = state.isLit ? '켜짐' : '꺼짐';
+        flameStatus.className = `status-value ${state.isLit ? 'on' : 'off'}`;
+        
+        currentBlowStrengthEl.textContent = state.blowStrength.toFixed(2);
+        currentFlameSizeEl.textContent = state.flameSize.toFixed(2);
+        currentLightIntensityEl.textContent = state.lightIntensity.toFixed(1);
+    });
+};
+
 // 컨트롤 박스가 표시될 때만 이벤트 리스너 등록
 if (showControls) {
+    setupStatusUpdates();
     // 모든 range input의 값 표시 업데이트
     document.querySelectorAll('.control-item input[type="range"]').forEach(input => {
         const valueDisplay = input.nextElementSibling as HTMLElement;
@@ -273,24 +292,3 @@ if (window.DeviceOrientationEvent) {
 window.addEventListener('resize', () => {
     candle.resize(window.innerWidth, window.innerHeight)
 })
-
-// 상태 업데이트 함수
-const updateStatus = () => {
-    const flameStatus = document.querySelector<HTMLElement>('#flame-status')!;
-    const currentBlowStrengthEl = document.querySelector<HTMLElement>('#current-blow-strength')!;
-    const currentFlameSizeEl = document.querySelector<HTMLElement>('#current-flame-size')!;
-    const currentLightIntensityEl = document.querySelector<HTMLElement>('#current-light-intensity')!;
-
-    setInterval(() => {
-        const isLit = candle.getIsLit();
-        flameStatus.textContent = isLit ? '켜짐' : '꺼짐';
-        flameStatus.className = `status-value ${isLit ? 'on' : 'off'}`;
-        
-        currentBlowStrengthEl.textContent = candle.getCurrentBlowStrength().toFixed(2);
-        currentFlameSizeEl.textContent = candle.getFlameSize().toFixed(2);
-        currentLightIntensityEl.textContent = candle.getLightIntensity().toFixed(1);
-    }, 100);
-};
-
-// 초기 상태 업데이트 시작
-updateStatus();

@@ -6,6 +6,7 @@
   "homepage": "https://4sizn.github.io/candle-web/",
   "scripts": {
     "dev": "vite --mode development",
+    "dev:release": "vite --mode release",
     "build:dev": "tsc && vite build --mode development",
     "build:release": "tsc && vite build --mode release",
     "preview:dev": "vite preview --mode development",
