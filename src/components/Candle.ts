@@ -18,6 +18,9 @@ export class Candle {
     private isDragging: boolean = false;
     private previousMousePosition: { x: number; y: number } = { x: 0, y: 0 };
     private currentRotation: number = 0;
+    private cameraDistance: number = 5;
+    private cameraHeight: number = 2;
+    private flameSize: number = 1;
 
     constructor(container: HTMLElement) {
         // Scene 설정
@@ -74,15 +77,17 @@ export class Candle {
             uniforms: {
                 time: { value: 0 },
                 blowStrength: { value: this.blowStrength },
-                gravity: { value: this.gravity }
+                gravity: { value: this.gravity },
+                flameSize: { value: this.flameSize }
             },
             vertexShader: `
                 uniform float time;
                 uniform float blowStrength;
                 uniform vec3 gravity;
+                uniform float flameSize;
                 
                 void main() {
-                    vec3 pos = position;
+                    vec3 pos = position * flameSize;
                     float heightFactor = (pos.y + 0.15) / 0.3;
                     float noise = sin(time * 5.0 + pos.y * 10.0) * 0.1 * heightFactor;
                     pos.x += noise + blowStrength * gravity.x * heightFactor;
@@ -126,37 +131,16 @@ export class Candle {
         this.mouse = new THREE.Vector2();
 
         // 이벤트 리스너 추가
-        container.addEventListener('click', this.onClick);
         container.addEventListener('mousedown', this.onMouseDown);
         container.addEventListener('mousemove', this.onMouseMove);
-        container.addEventListener('mouseup', () => this.isDragging = false);
-        container.addEventListener('mouseleave', () => this.isDragging = false);
+        container.addEventListener('mouseup', this.onMouseUp);
+        container.addEventListener('mouseleave', this.onMouseUp);
 
         this.animate();
     }
 
-    private onClick = (event: MouseEvent) => {
-        // 마우스가 드래그 중이었다면 클릭 이벤트를 무시
-        if (this.isDragging) return;
-
-        // 마우스 좌표를 정규화된 장치 좌표로 변환 (-1 ~ 1)
-        const rect = (event.target as HTMLElement).getBoundingClientRect();
-        this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        // 레이캐스터 업데이트
-        this.raycaster.setFromCamera(this.mouse, this.camera);
-
-        // 촛불 몸체와 심지에 대해 교차 검사
-        const intersects = this.raycaster.intersectObjects([this.candleBody, this.wick]);
-
-        if (intersects.length > 0) {
-            this.toggle();
-        }
-    }
-
     private onMouseDown = (event: MouseEvent) => {
-        this.isDragging = false; // 드래그 시작 시 초기화
+        this.isDragging = false; // 클릭 시작 시 드래그 상태 초기화
         this.previousMousePosition = {
             x: event.clientX,
             y: event.clientY
@@ -175,13 +159,8 @@ export class Candle {
 
         if (!this.isDragging) return;
 
-        const deltaMove = {
-            x: deltaX,
-            y: deltaY
-        };
-
         // 카메라를 촛불 주위로 회전
-        this.currentRotation += deltaMove.x * 0.01;
+        this.currentRotation += deltaX * 0.01;
         const radius = 5;
         this.camera.position.x = Math.sin(this.currentRotation) * radius;
         this.camera.position.z = Math.cos(this.currentRotation) * radius;
@@ -192,6 +171,28 @@ export class Candle {
             x: event.clientX,
             y: event.clientY
         };
+    }
+
+    private onMouseUp = (event: MouseEvent) => {
+        // 드래그하지 않은 상태에서 마우스를 떼면 클릭으로 간주
+        if (!this.isDragging && event.type === 'mouseup') {
+            // 마우스 좌표를 정규화된 장치 좌표로 변환 (-1 ~ 1)
+            const rect = (event.target as HTMLElement).getBoundingClientRect();
+            this.mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            this.mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+            // 레이캐스터 업데이트
+            this.raycaster.setFromCamera(this.mouse, this.camera);
+
+            // 촛불 몸체와 심지에 대해 교차 검사
+            const intersects = this.raycaster.intersectObjects([this.candleBody, this.wick]);
+
+            if (intersects.length > 0) {
+                this.toggle();
+            }
+        }
+
+        this.isDragging = false;
     }
 
     private animate = () => {
@@ -216,6 +217,7 @@ export class Candle {
             uniforms.time.value += 0.01;
             uniforms.blowStrength.value = this.blowStrength;
             uniforms.gravity.value = this.gravity;
+            uniforms.flameSize.value = this.flameSize;
 
             // 불꽃 크기와 빛의 강도 조절
             const scale = 1 - this.blowStrength;
@@ -274,9 +276,64 @@ export class Candle {
         }
     }
 
+    public setRecoverySpeed(speed: number) {
+        this.recoverySpeed = speed;
+    }
+
+    public setLightIntensity(intensity: number) {
+        if (this.isLit) {
+            this.flameLight.intensity = intensity;
+        }
+    }
+
+    public setLightDistance(distance: number) {
+        this.flameLight.distance = distance;
+    }
+
+    public setCameraDistance(distance: number) {
+        this.cameraDistance = distance;
+        this.updateCameraPosition();
+    }
+
+    public setCameraHeight(height: number) {
+        this.cameraHeight = height;
+        this.updateCameraPosition();
+    }
+
+    private updateCameraPosition() {
+        this.camera.position.x = Math.sin(this.currentRotation) * this.cameraDistance;
+        this.camera.position.y = this.cameraHeight;
+        this.camera.position.z = Math.cos(this.currentRotation) * this.cameraDistance;
+        this.camera.lookAt(0, 1, 0);
+        this.camera.rotateX(-Math.PI * 20 / 180);
+    }
+
     public resize(width: number, height: number) {
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+    }
+
+    public setFlameSize(size: number) {
+        this.flameSize = size;
+        const uniforms = (this.flame.material as THREE.ShaderMaterial).uniforms;
+        uniforms.flameSize.value = this.flameSize;
+    }
+
+    // Getter 메서드들 추가
+    public getIsLit(): boolean {
+        return this.isLit;
+    }
+
+    public getFlameSize(): number {
+        return this.flameSize;
+    }
+
+    public getLightIntensity(): number {
+        return this.flameLight.intensity;
+    }
+
+    public getCurrentBlowStrength(): number {
+        return this.blowStrength;
     }
 } 
