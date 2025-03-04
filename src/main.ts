@@ -161,8 +161,9 @@ if (showControls) {
         }
 
         const recoveryInterval = setInterval(() => {
+            const currentRecoverySpeed = parseFloat(recoverySpeed.value);
             if (currentBlowStrength > 0) {
-                currentBlowStrength = Math.max(0, currentBlowStrength - blowDecrement);
+                currentBlowStrength = Math.max(0, currentBlowStrength - currentRecoverySpeed);
                 candle.setBlowStrength(currentBlowStrength);
             } else {
                 clearInterval(recoveryInterval);
