@@ -156,8 +156,8 @@ if (showControls) {
         blowInterval = window.setInterval(() => {
             const currentTime = Date.now();
             const totalElapsedTime = (currentTime - startTime) / 1000;
-            
             const targetStrength = parseFloat(blowStrength.value);
+            const blowIncrementInput = document.querySelector<HTMLInputElement>('#blow-increment')!;
             const speed = parseFloat(blowIncrementInput.value);
             
             if (currentBlowStrength < targetStrength) {
