@@ -1,11 +1,13 @@
 {
   "name": "candle-web",
   "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:release":"vite build -- --mode release",
+    "build:dev":"vite build -- --mode development",
     "preview": "vite preview"
   },
   "devDependencies": {
