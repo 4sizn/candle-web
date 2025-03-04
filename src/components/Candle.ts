@@ -21,6 +21,7 @@ export class Candle {
     private cameraDistance: number = 5;
     private cameraHeight: number = 2;
     private flameSize: number = 1;
+    private baseIntensity: number = 2; // 기본 빛 강도 값 저장을 위한 변수 추가
 
     constructor(container: HTMLElement) {
         // Scene 설정
@@ -122,7 +123,7 @@ export class Candle {
         this.scene.add(ambientLight);
 
         // 불꽃 조명
-        this.flameLight = new THREE.PointLight(0xFF9000, 2, 10);
+        this.flameLight = new THREE.PointLight(0xFF9000, this.baseIntensity, 10);
         this.flameLight.position.set(0, 1.5, 0);
         this.scene.add(this.flameLight);
 
@@ -161,11 +162,7 @@ export class Candle {
 
         // 카메라를 촛불 주위로 회전
         this.currentRotation += deltaX * 0.01;
-        const radius = 5;
-        this.camera.position.x = Math.sin(this.currentRotation) * radius;
-        this.camera.position.z = Math.cos(this.currentRotation) * radius;
-        this.camera.lookAt(0, 1, 0);
-        this.camera.rotateX(-Math.PI * 20 / 180);
+        this.updateCameraPosition();
 
         this.previousMousePosition = {
             x: event.clientX,
@@ -223,9 +220,8 @@ export class Candle {
             const scale = 1 - this.blowStrength;
             this.flame.scale.set(scale, scale, scale);
             
-            // 불꽃의 크기에 따라 빛의 강도 조절
-            const lightIntensity = 2 * scale; // 기본 강도의 2배를 최대로
-            this.flameLight.intensity = lightIntensity;
+            // 바람의 영향을 받은 빛의 강도 계산
+            this.flameLight.intensity = this.baseIntensity * scale;
         } else {
             // 불이 꺼졌을 때는 빛의 강도를 0으로
             this.flameLight.intensity = 0;
@@ -269,7 +265,7 @@ export class Candle {
             // 불이 켜질 때는 모든 값을 초기화
             this.blowStrength = 0;
             this.targetBlowStrength = 0;
-            this.flameLight.intensity = 2;
+            this.flameLight.intensity = this.baseIntensity;
         } else {
             // 불이 꺼질 때
             this.flameLight.intensity = 0;
@@ -281,8 +277,10 @@ export class Candle {
     }
 
     public setLightIntensity(intensity: number) {
+        this.baseIntensity = intensity;
         if (this.isLit) {
-            this.flameLight.intensity = intensity;
+            const scale = 1 - this.blowStrength;
+            this.flameLight.intensity = this.baseIntensity * scale;
         }
     }
 
