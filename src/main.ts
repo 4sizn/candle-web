@@ -112,6 +112,10 @@ const candleContainer = document.querySelector<HTMLDivElement>('#candle-containe
 
 const candle = new Candle(candleContainer, initialOptions);
 
+// 초기 카메라 위치 설정
+candle.setCameraDistance(initialOptions.cameraDistance);
+candle.setCameraHeight(initialOptions.cameraHeight);
+
 // 컨트롤 박스가 표시될 때만 이벤트 리스너 등록
 if (showControls) {
     // 모든 range input의 값 표시 업데이트
@@ -141,13 +145,12 @@ if (showControls) {
     blowBtn.addEventListener('mousedown', () => {
         if (blowInterval) return;
         
+        currentBlowStrength = 0; // 시작할 때 바람 세기 초기화
         const startTime = Date.now();
-        let lastTime = startTime;
         
         blowInterval = window.setInterval(() => {
             const currentTime = Date.now();
             const totalElapsedTime = (currentTime - startTime) / 1000;
-            lastTime = currentTime;
             
             const targetStrength = parseFloat(blowStrength.value);
             const speed = parseFloat(blowIncrementInput.value);
